@@ -2,19 +2,30 @@
 
 Graphics::Graphics()
 {
-
+	m_camera = nullptr;
+	m_shader = nullptr;
+	m_sphere = nullptr;
+	m_sphere2 = nullptr;
+	m_sphere3 = nullptr;
+	m_mesh = nullptr;
+	m_skybox = nullptr;
 }
 
 Graphics::~Graphics()
 {
-
+	delete m_camera;
+	delete m_shader;
+	delete m_sphere;
+	delete m_sphere2;
+	delete m_sphere3;
+	delete m_mesh;
+	delete m_skybox;
 }
 
 bool Graphics::Initialize(int width, int height)
 {
 	// Used for the linux OS
 #if !defined(__APPLE__) && !defined(MACOSX)
-  // cout << glewGetString(GLEW_VERSION) << endl;
 	glewExperimental = GL_TRUE;
 
 	auto status = glewInit();
@@ -30,8 +41,6 @@ bool Graphics::Initialize(int width, int height)
 		return false;
 	}
 #endif
-
-
 
 	// Init Camera
 	m_camera = new Camera();
@@ -75,6 +84,11 @@ bool Graphics::Initialize(int width, int height)
 		printf("Some shader attribs not located!\n");
 	}
 
+	if (!InitializeSkybox()) {
+		printf("Skybox Failed to Initialize\n");
+		return false;
+	}
+
 	// Starship
 	m_mesh = new Mesh(glm::vec3(2.0f, 3.0f, -5.0f), "assets\\SpaceShip-1.obj", "assets\\SpaceShip-1.png");
 
@@ -83,11 +97,9 @@ bool Graphics::Initialize(int width, int height)
 
 	// The Earth
 	m_sphere2 = new Sphere(48, "assets\\2k_earth_daymap.jpg");
-	
+
 	// The moon
 	m_sphere3 = new Sphere(48, "assets\\2k_moon.jpg");
-
-
 
 	//enable depth testing
 	glEnable(GL_DEPTH_TEST);
@@ -124,17 +136,30 @@ void Graphics::HierarchicalUpdate2(double dt) {
 	m_sphere3->Update(moonModel);
 
 	//starship
+
+	//gets the starships orientation position to match with camera
+	glm::vec3 shipPos = m_camera->GetStarshipPos();
+	glm::vec3 shipFront = glm::normalize(m_camera->GetStarshipFront());
+	glm::vec3 shipUp = glm::normalize(m_camera->GetStarshipUp());
+	glm::vec3 shipRight = glm::normalize(glm::cross(shipUp, shipFront));
+
+	//orients the starship with the camera position.
+	glm::mat4 shipOrientation(1.0f);
+	shipOrientation[0] = glm::vec4(shipRight, 0.0f);
+	shipOrientation[1] = glm::vec4(shipUp, 0.0f);
+	shipOrientation[2] = glm::vec4(shipFront, 0.0f);
+
+	//render the starship model
 	glm::mat4 shipModel = glm::mat4(1.0f);
-	shipModel *= glm::rotate(glm::mat4(1.0f), 0.4f * (float)dt, glm::vec3(1.0f, 0.0f, 0.0f));
-	shipModel *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
-	shipModel *= glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	shipModel *= glm::translate(glm::mat4(1.0f), shipPos);
+	shipModel *= shipOrientation;
+	shipModel *= glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); //ship is facing away from camera/sun
 	shipModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.02f, 0.02f, 0.02f));
 	m_mesh->Update(shipModel);
 
 }
 
-
-void Graphics::ComputeTransforms(double dt, std::vector<float> speed, std::vector<float> dist, 
+void Graphics::ComputeTransforms(double dt, std::vector<float> speed, std::vector<float> dist,
 	std::vector<float> rotSpeed, glm::vec3 rotVector, std::vector<float> scale, glm::mat4& tmat, glm::mat4& rmat, glm::mat4& smat) {
 	tmat = glm::translate(glm::mat4(1.f),
 		glm::vec3(cos(speed[0] * dt) * dist[0], sin(speed[1] * dt) * dist[1], sin(speed[2] * dt) * dist[2])
@@ -146,13 +171,14 @@ void Graphics::ComputeTransforms(double dt, std::vector<float> speed, std::vecto
 void Graphics::Render()
 {
 	//clear the screen
-	glClearColor(0.5, 0.2, 0.2, 1.0);
+	glClearColor(0.5f, 0.2f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//render the skybox
+	RenderSkybox();
 
 	// Start the correct program
 	m_shader->Enable();
-	GLuint sampler = m_shader->GetUniformLocation("sp");
-	glUniform1i(sampler, 0);
 
 	// Send in the projection and view to the shader (stay the same while camera intrinsic(perspective) and extrinsic (view) parameters are the same
 	glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
@@ -164,12 +190,11 @@ void Graphics::Render()
 		m_cube->Render(m_positionAttrib,m_colorAttrib);
 	}*/
 
-	/*if (m_mesh != NULL) {
-		glUniform1i(m_hasTexture, false);
+	if (m_mesh != NULL) {
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_mesh->GetModel()));
 		if (m_mesh->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, m_sphere->getTextureID());
+			glBindTexture(GL_TEXTURE_2D, m_mesh->getTextureID());
 			GLuint sampler = m_shader->GetUniformLocation("sp");
 			if (sampler == INVALID_UNIFORM_LOCATION)
 			{
@@ -178,18 +203,9 @@ void Graphics::Render()
 			glUniform1i(sampler, 0);
 			m_mesh->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
-	}*/
-	if (m_mesh != NULL) {
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_mesh->GetModel()));
-		m_mesh->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 	}
 
-	/*if (m_pyramid != NULL) {
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_pyramid->GetModel()));
-		m_pyramid->Render(m_positionAttrib, m_colorAttrib);
-	}*/
-
-	/*if (m_sphere != NULL) {
+	if (m_sphere != NULL) {
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere->GetModel()));
 		if (m_sphere->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
@@ -202,13 +218,9 @@ void Graphics::Render()
 			glUniform1i(sampler, 0);
 			m_sphere->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
-	}*/
-	if (m_sphere != NULL) {
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere->GetModel()));
-		m_sphere->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 	}
 
-	/*if (m_sphere2 != NULL) {
+	if (m_sphere2 != NULL) {
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere2->GetModel()));
 		if (m_sphere2->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
@@ -221,14 +233,11 @@ void Graphics::Render()
 			glUniform1i(sampler, 0);
 			m_sphere2->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
-	}*/
-	if (m_sphere2 != NULL) {
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere2->GetModel()));
-		m_sphere2->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 	}
 
+
 	// Render Moon
-	/*if (m_sphere3 != NULL) {
+	if (m_sphere3 != NULL) {
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere3->GetModel()));
 		if (m_sphere3->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
@@ -241,10 +250,6 @@ void Graphics::Render()
 			glUniform1i(sampler, 0);
 			m_sphere3->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
-	}*/
-	if (m_sphere3 != NULL) {
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere3->GetModel()));
-		m_sphere3->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 	}
 
 	// Get any errors from OpenGL
@@ -299,7 +304,7 @@ bool Graphics::collectShPrLocs() {
 		anyProblem = false;
 	}
 
-	// Locate the color vertex attribute
+	// Locate the texture coordinate vertex attribute
 	m_tcAttrib = m_shader->GetAttribLocation("v_tc");
 	if (m_tcAttrib == -1)
 	{
@@ -314,6 +319,25 @@ bool Graphics::collectShPrLocs() {
 	}
 
 	return anyProblem;
+}
+
+bool Graphics::InitializeSkybox()
+{
+	m_skybox = new Skybox();
+
+	if (!m_skybox->Initialize())
+	{
+		return false;
+	}
+	return true;
+}
+
+void Graphics::RenderSkybox()
+{
+	if (m_skybox != nullptr)
+	{
+		m_skybox->Render(m_camera->GetProjection(), m_camera->GetView());
+	}
 }
 
 std::string Graphics::ErrorString(GLenum error)

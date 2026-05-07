@@ -63,21 +63,31 @@ void Engine::Run()
 
 void Engine::ProcessInput()
 {
+    float currentFrame = static_cast<float>(glfwGetTime());
+    float deltaTime = currentFrame - m_lastFrame;
+    m_lastFrame = currentFrame;
+
     if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(m_window->getWindow(), true);
 
 
-    // Update camera animation here.
-    float cameraSpeed = 0.015f;
+    //exploration mode
 
-    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_W) == GLFW_PRESS)
-        m_graphics->getCamera()->MoveForward(cameraSpeed);
-    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_S) == GLFW_PRESS)
-        m_graphics->getCamera()->MoveBackward(cameraSpeed);
-    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_A) == GLFW_PRESS)
-        m_graphics->getCamera()->MoveLeft(cameraSpeed);
-    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_D) == GLFW_PRESS)
-        m_graphics->getCamera()->MoveRight(cameraSpeed);
+    m_graphics->getCamera()->Exploration(m_window->getWindow(), deltaTime); //calls exploration controls
+
+    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_SPACE) == GLFW_PRESS) //brakes
+    {
+        m_graphics->getCamera()->Brake(deltaTime);
+    }
+
+    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) //accelerates
+    {
+        m_graphics->getCamera()->Accelerate(deltaTime);
+    }
+
+    m_graphics->getCamera()->UpdateMovement(deltaTime); //updates camera movement (commented for now since the camera will be moving forward out of view)
+
+    //planetary observation mode
 
 }
 
@@ -124,9 +134,9 @@ long long Engine::GetCurrentTimeMillis()
 
 void Engine::Display(GLFWwindow* window, double time) {
 
+    m_graphics->HierarchicalUpdate2(time);
     m_graphics->Render();
     m_window->Swap();
-    m_graphics->HierarchicalUpdate2(time);
 }
 
 static void cursorPositionCallBack(GLFWwindow* window, double xpos, double ypos) {

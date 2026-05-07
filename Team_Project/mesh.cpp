@@ -2,6 +2,12 @@
 
 Mesh::Mesh()
 {
+	m_texture = nullptr;
+	hasTex = false;
+	VB = 0;
+	IB = 0;
+	vao = 0;
+
 	// Vertex Set Up
 	// No mesh
 
@@ -19,8 +25,14 @@ Mesh::Mesh()
 
 Mesh::Mesh(glm::vec3 pivot, const char* fname)
 {
+	m_texture = nullptr;
+	hasTex = false;
+	VB = 0;
+	IB = 0;
+	vao = 0;
+
 	// Vertex Set Up
-	loadModelFromFile(fname);
+	bool loaded = loadModelFromFile(fname);
 
 	// Model Set Up
 	angle = 0.0f;
@@ -28,17 +40,21 @@ Mesh::Mesh(glm::vec3 pivot, const char* fname)
 	model = glm::translate(glm::mat4(1.0f), pivotLocation);
 
 	// Buffer Set Up
-	if (!InitBuffers()) {
+	if (loaded && !InitBuffers()) {
 		printf("some buffers not initialized.\n");
 	}
-
-	hasTex = false;
 }
 
 Mesh::Mesh(glm::vec3 pivot, const char* fname, const char* tname)
 {
+	m_texture = nullptr;
+	hasTex = false;
+	VB = 0;
+	IB = 0;
+	vao = 0;
+
 	// Vertex Set Up
-	loadModelFromFile(fname);
+	bool loaded = loadModelFromFile(fname);
 
 	// Model Set Up
 	angle = 0.0f;
@@ -47,16 +63,16 @@ Mesh::Mesh(glm::vec3 pivot, const char* fname, const char* tname)
 	model *= glm::scale(glm::mat4(1.0f), glm::vec3(0.05f, 0.05f, 0.05f));
 
 	// Buffer Set Up
-	if (!InitBuffers()) {
+	if (loaded && !InitBuffers()) {
 		printf("some buffers not initialized.\n");
 	}
 
-	// load texture from file
-	m_texture = new Texture(tname);
-	if (m_texture)
-		hasTex = true;
-	else
-		hasTex = false;
+	if (loaded) {
+		// load texture from file
+		m_texture = new Texture(tname);
+		if (m_texture)
+			hasTex = true;
+	}
 }
 
 
@@ -79,6 +95,9 @@ glm::mat4 Mesh::GetModel()
 
 void Mesh::Render(GLint posAttribLoc, GLint colAttribLoc)
 {
+	if (vao == 0 || Indices.empty()) {
+		return;
+	}
 
 	glBindVertexArray(vao);
 
@@ -106,6 +125,10 @@ void Mesh::Render(GLint posAttribLoc, GLint colAttribLoc)
 
 void Mesh::Render(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLint hasTextureLoc)
 {
+	if (vao == 0 || Indices.empty()) {
+		return;
+	}
+
 	glBindVertexArray(vao);
 	// Enable vertex attibute arrays for each vertex attrib
 	glEnableVertexAttribArray(posAttribLoc);
@@ -144,6 +167,10 @@ void Mesh::Render(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLi
 
 
 bool Mesh::InitBuffers() {
+	if (Vertices.empty() || Indices.empty()) {
+		printf("Mesh buffer initialization skipped because the mesh has no vertex/index data.\n");
+		return false;
+	}
 
 	// For OpenGL 3
 	glGenVertexArrays(1, &vao);
@@ -151,12 +178,12 @@ bool Mesh::InitBuffers() {
 
 	glGenBuffers(1, &VB);
 	glBindBuffer(GL_ARRAY_BUFFER, VB);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * Vertices.size(), &Vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * Vertices.size(), Vertices.data(), GL_STATIC_DRAW);
 
 
 	glGenBuffers(1, &IB);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), &Indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Indices.size(), Indices.data(), GL_STATIC_DRAW);
 
 	return true;
 }
