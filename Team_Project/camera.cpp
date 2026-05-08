@@ -46,19 +46,49 @@ glm::mat4 Camera::GetView()
 
 void Camera::Update() {
 
-    if (isFirstPersonToggled)
+    if (isObservationModeToggled && isPlanetLockedOn)
+    {
+		ObservationModeView(); //toggle observation mode view if observation mode is toggled on, otherwise toggle third person view
+    }
+    else if (isFirstPersonToggled)
     {
         FirstPersonCameraView();
     }
-    else
+    else 
     {
-        ThirdPersonCameraView();
+		ThirdPersonCameraView();
     }
 }
 
 void Camera::ToggleFirstPerson(bool enabled)
 {
+	//first person goes into position of the starship and looks in the direction the starship is facing
     isFirstPersonToggled = enabled;
+
+    if (enabled)
+    {
+		isPlanetLockedOn = false; //disable planet lock-on when toggling to first person mode
+		isObservationModeToggled = false; //disable observation mode when toggling to first person mode
+    }
+
+	//observation mode goes into position of the starship and looks at the planet being observed
+    Update();
+}
+
+void Camera::ToggleObservationMode(bool enabled)
+{
+    isObservationModeToggled = enabled;
+
+    if (enabled)
+    {
+        //isPlanetLockedOn = true;
+		isFirstPersonToggled = false; //disable first person mode when toggling to observation mode
+    }
+    else
+    {
+		isPlanetLockedOn = false;
+    }
+
     Update();
 }
 
@@ -92,6 +122,24 @@ void Camera::Rotate(float xoffset, float yoffset)
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
+    if(isObservationModeToggled && isPlanetLockedOn)
+    {
+        observationYaw += xoffset;
+        observationPitch += yoffset;
+
+        if (observationPitch > 89.0f) 
+        {
+            observationPitch = 89.0f;
+        }
+
+        if (observationPitch < -89.0f) 
+        {
+            observationPitch = -89.0f;
+        }
+		ObservationModeView();
+        return;
+	}
+
     yaw += xoffset;
     pitch += yoffset;
 
@@ -102,25 +150,38 @@ void Camera::Rotate(float xoffset, float yoffset)
         pitch = -89.0f;
     }
     updateCameraVectors();
-    /*glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-    cameraFront = glm::normalize(direction);
-
-    Update();*/
 }
 
 void Camera::Zoom(float yoffset) {
+
+    if (isObservationModeToggled && isPlanetLockedOn)
+    {
+		//update observationRadius based on yoffset
+        observationRadius -= yoffset * 0.5f; // Adjust the zoom speed for observation mode
+
+        if (observationRadius < 2.0f)
+        {
+            observationRadius = 2.0f; // Minimum distance from the planet
+        }
+        if (observationRadius > 200.0f)
+        {
+            observationRadius = 200.0f; // Maximum distance from the planet
+        }
+        ObservationModeView();
+        return;
+    }
+
     fov -= yoffset;
 
-    if (fov < 1.0f) {
+    if (fov < 1.0f) 
+    {
         fov = 1.0f;
     }
-    if (fov > 90.0f) {
+    if (fov > 90.0f) 
+    {
         fov = 90.0f;
     }
+
     Update();
 }
 
@@ -180,6 +241,12 @@ void Camera::Brake(float dt)
 
 void Camera::UpdateMovement(float dt) 
 {
+
+    if(isObservationModeToggled && isPlanetLockedOn)
+    {
+        return; //don't update movement if in observation mode with planet lock-on
+	}
+
     starshipPos += cameraFront * currentSpeed * dt; //moves the starship forward
 
     Update();
@@ -245,4 +312,95 @@ void Camera::FirstPersonCameraView()
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp); //positions the camera at the starship's position
 
 	projection = glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 500.0f);
+}
+
+void Camera::ObservationModeView() //might not even be correct but it is supposed to position the camera at a fixed distance from the planet and allow the user to rotate around the planet while keeping the camera focused on the planet
+{ 
+    float x = PlanetTargetPos.x + observationRadius * cos(glm::radians(observationYaw)) * cos(glm::radians(observationPitch)); //position the camera at a fixed distance from the planet
+    float y = PlanetTargetPos.y + observationRadius * sin(glm::radians(observationPitch));
+    float z = PlanetTargetPos.z + observationRadius * sin(glm::radians(observationYaw)) * cos(glm::radians(observationPitch));
+
+    cameraPos = glm::vec3(x, y, z);
+
+    view = glm::lookAt(cameraPos, PlanetTargetPos, glm::vec3(0.0f, 1.0f, 0.0f)); //positions the camera at the starship's position
+    projection = glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 500.0f);
+}
+
+void Camera::SetObservationTarget(const glm::vec3& target) 
+{
+    PlanetTargetPos = target;
+
+	glm::vec3 offset = cameraPos - PlanetTargetPos;
+    observationRadius = glm::length(offset);
+
+    if(observationRadius < 0.001f)
+    {
+        observationRadius = 10.0f; // Minimum distance from the planet
+		offset = glm::vec3(0.0f, 0.0f, observationRadius); // Default offset if the camera is too close to the planet
+	}
+
+    observationYaw = glm::degrees(glm::atan(offset.z, offset.x));
+    observationPitch = glm::degrees(glm::asin(offset.y / observationRadius));
+
+    defaultObservationYaw = observationYaw;
+    defaultObservationPitch = observationPitch;
+	defaultObservationRadius = observationRadius;
+
+	isPlanetLockedOn = true;
+	isObservationModeToggled = true;
+	isFirstPersonToggled = false; //disable first person mode when setting observation target
+    
+	ObservationModeView();
+}
+
+void Camera::UpdateObservationTargetPosition(const glm::vec3& target)
+{
+    if (!isObservationModeToggled || !isPlanetLockedOn)
+    {
+        return;
+    }
+
+    PlanetTargetPos = target;
+    ObservationModeView();
+}
+
+void Camera::UpdateObservationCamera(float dt) 
+{
+ //   if (isPlanetLockedOn)
+ //   {
+ //       observationYaw += starshipTurnSpeed * dt; //rotate around the planet
+ //   }
+
+ //   float x = PlanetTargetPos.x + observationRadius * cos(glm::radians(observationYaw)) * cos(glm::radians(observationPitch));
+ //   float y = PlanetTargetPos.y + observationRadius * sin(glm::radians(observationPitch));
+ //   float z = PlanetTargetPos.z + observationRadius * sin(glm::radians(observationYaw)) * cos(glm::radians(observationPitch));
+
+ //   cameraPos = glm::vec3(x, y, z);
+	//view = glm::lookAt(cameraPos, PlanetTargetPos, cameraUp);
+
+    if(!isObservationModeToggled || !isPlanetLockedOn)
+    {
+        return; //don't update observation camera if not in observation mode or if planet lock-on is not enabled
+	}
+	ObservationModeView();
+}
+
+void Camera::ResetObservationCamera()
+{
+    observationYaw = defaultObservationYaw;
+    observationPitch = defaultObservationPitch;
+	observationRadius = defaultObservationRadius;
+
+    ObservationModeView();
+}
+void Camera::RotateAroundPlanet()
+{
+    observationYaw += starshipTurnSpeed * 0.01f; //rotate around the planet
+    /*float x = PlanetTargetPos.x + observationRadius * cos(glm::radians(observationYaw)) * cos(glm::radians(observationPitch));
+    float y = PlanetTargetPos.y + observationRadius * sin(glm::radians(observationPitch));
+    float z = PlanetTargetPos.z + observationRadius * sin(glm::radians(observationYaw)) * cos(glm::radians(observationPitch));
+    cameraPos = glm::vec3(x, y, z);
+	view = glm::lookAt(cameraPos, PlanetTargetPos, cameraUp);*/
+
+	ObservationModeView();
 }

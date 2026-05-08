@@ -1,6 +1,5 @@
-
-
 #include "engine.h"
+#include <limits>
 #include "glm/ext.hpp"
 
 Engine::Engine(const char* name, int width, int height)
@@ -70,29 +69,71 @@ void Engine::ProcessInput()
     if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(m_window->getWindow(), true);
 
-    //exploration mode
-
-    m_graphics->getCamera()->Exploration(m_window->getWindow(), deltaTime); //calls exploration controls
-
-    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_SPACE) == GLFW_PRESS) //brakes
-    {
-        m_graphics->getCamera()->Brake(deltaTime);
-    }
-
-    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) //accelerates
-    {
-        m_graphics->getCamera()->Accelerate(deltaTime);
-    }
-
-    m_graphics->getCamera()->UpdateMovement(deltaTime); //updates camera movement (commented for now since the camera will be moving forward out of view)
+    Camera* camera = m_graphics->getCamera();
 
 	//planetary observation mode
     bool tabPressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_TAB) == GLFW_PRESS;
     if (tabPressed && !isTabPressed)
     {
-        m_graphics->getCamera()->ToggleFirstPerson(!m_graphics->getCamera()->IsFirstPersonMode());
+        if (!camera->IsObservationMode())
+        {
+            glm::vec3 closestPlanetPos = m_graphics->getPlanetPosition("Earth"); //default to Earth if no planets are close enough
+            float closestDistance = std::numeric_limits<float>::max();
+            m_observationPlanetName = "Earth";
+
+            for (const std::string& planetName : {"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"}) 
+            {
+                glm::vec3 planetPos = m_graphics->getPlanetPosition(planetName);
+                float distance = glm::length(planetPos - camera->GetStarshipPos());
+
+                if (distance < closestDistance) 
+                {
+                    closestDistance = distance;
+                    closestPlanetPos = planetPos;
+                    m_observationPlanetName = planetName;
+                }
+            }
+			camera->SetObservationTarget(closestPlanetPos);
+        }
+        else 
+        {
+            m_observationPlanetName.clear();
+			camera->ToggleObservationMode(false);
+        }
     }
     isTabPressed = tabPressed;
+
+    if (camera->IsObservationMode())
+    {
+        if (!m_observationPlanetName.empty())
+        {
+            camera->UpdateObservationTargetPosition(m_graphics->getPlanetPosition(m_observationPlanetName));
+        }
+
+        camera->UpdateObservationCamera(deltaTime);
+
+        if (glfwGetKey(m_window->getWindow(), GLFW_KEY_R) == GLFW_PRESS)
+        {
+			camera->ResetObservationCamera();
+		}
+
+        return;
+	}
+
+    //exploration mode
+    camera->Exploration(m_window->getWindow(), deltaTime); //calls exploration controls
+
+    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_SPACE) == GLFW_PRESS) //brakes
+    {
+        camera->Brake(deltaTime);
+    }
+
+    if (glfwGetKey(m_window->getWindow(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) //accelerates
+    {
+        camera->Accelerate(deltaTime);
+    }
+
+    camera->UpdateMovement(deltaTime); //updates camera movement (commented for now since the camera will be moving forward out of view)
 }
 
 void Engine::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
