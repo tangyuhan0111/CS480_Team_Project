@@ -34,6 +34,8 @@ class Graphics
     bool collectShPrLocs();
     void ComputeTransforms (double dt, std::vector<float> speed, std::vector<float> dist, std::vector<float> rotSpeed, glm::vec3 rotVector, std::vector<float> scale, glm::mat4& tmat, glm::mat4& rmat, glm::mat4& smat);
 
+    void AddPlanet(const std::string& name, const char* texturePath, float radius, float orbitRadius, float orbitSpeed, float rotationSpeed, float axialTilt);
+
     stack<glm::mat4> modelStack;
 
     Camera *m_camera;
@@ -47,9 +49,21 @@ class Graphics
     GLint m_tcAttrib;
     GLint m_hasTexture;
 
-    Sphere* m_sphere;
+    /*Sphere* m_sphere;
     Sphere* m_sphere2;
-    Sphere* m_sphere3;
+    Sphere* m_sphere3;*/
+    struct Planet {
+        Sphere* sphere;
+        std::string name;
+        float radius;
+        float orbitRadius;
+        float orbitSpeed;
+        float rotationSpeed;
+        float axialTilt;
+    };
+    std::vector<Planet> m_planets;
+    Sphere* m_sun;
+    Sphere* m_moon;
 
     Mesh* m_mesh;
     Skybox* m_skybox;

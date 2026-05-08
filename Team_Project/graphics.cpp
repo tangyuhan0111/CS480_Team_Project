@@ -4,9 +4,9 @@ Graphics::Graphics()
 {
 	m_camera = nullptr;
 	m_shader = nullptr;
-	m_sphere = nullptr;
-	m_sphere2 = nullptr;
-	m_sphere3 = nullptr;
+	m_sun = nullptr;
+	// m_sphere2 = nullptr;
+	m_moon = nullptr;
 	m_mesh = nullptr;
 	m_skybox = nullptr;
 }
@@ -15,11 +15,14 @@ Graphics::~Graphics()
 {
 	delete m_camera;
 	delete m_shader;
-	delete m_sphere;
-	delete m_sphere2;
-	delete m_sphere3;
+	delete m_sun;
+	//delete m_sphere2;
+	delete m_moon;
 	delete m_mesh;
 	delete m_skybox;
+	for (Planet& planet : m_planets) {
+		delete planet.sphere;
+	}
 }
 
 bool Graphics::Initialize(int width, int height)
@@ -93,13 +96,23 @@ bool Graphics::Initialize(int width, int height)
 	m_mesh = new Mesh(glm::vec3(2.0f, 3.0f, -5.0f), "assets\\SpaceShip-1.obj", "assets\\SpaceShip-1.png");
 
 	// The Sun
-	m_sphere = new Sphere(64, "assets\\2k_sun.jpg");
+	m_sun = new Sphere(64, "assets\\Term Project Assets\\2k_sun.jpg");
+
+	// add all planet
+	AddPlanet("Mercury", "assets\\Term Project Assets\\Mercury.jpg", 0.138f, 5.22f, 1.20f, 1.0f, 0.0f);
+	AddPlanet("Venus", "assets\\Term Project Assets\\Venus.jpg", 0.342f, 9.77f, 0.90f, 0.8f, 177.0f);
+	AddPlanet("Earth", "assets\\Term Project Assets\\2k_earth_daymap.jpg", 0.360f, 13.50f, 0.60f, 1.5f, 23.5f);
+	AddPlanet("Mars", "assets\\Term Project Assets\\Mars.jpg", 0.192f, 20.57f, 0.50f, 1.3f, 25.0f);
+	AddPlanet("Jupiter", "assets\\Term Project Assets\\Jupiter.jpg", 4.035f, 70.25f, 0.25f, 2.2f, 3.0f);
+	AddPlanet("Saturn", "assets\\Term Project Assets\\Saturn.jpg", 3.402f, 128.75f, 0.18f, 2.0f, 26.7f);
+	AddPlanet("Uranus", "assets\\Term Project Assets\\Uranus.jpg", 1.443f, 259.07f, 0.13f, 1.4f, 97.8f);
+	AddPlanet("Neptune", "assets\\Term Project Assets\\Neptune.jpg", 1.395f, 405.95f, 0.10f, 1.3f, 28.3f);
 
 	// The Earth
-	m_sphere2 = new Sphere(48, "assets\\2k_earth_daymap.jpg");
+	//m_sphere2 = new Sphere(48, "assets\\2k_earth_daymap.jpg");
 
 	// The moon
-	m_sphere3 = new Sphere(48, "assets\\2k_moon.jpg");
+	m_moon = new Sphere(48, "assets\\Term Project Assets\\2k_moon.jpg");
 
 	//enable depth testing
 	glEnable(GL_DEPTH_TEST);
@@ -114,26 +127,36 @@ void Graphics::HierarchicalUpdate2(double dt) {
 	//sun
 	glm::mat4 sunModel = glm::mat4(1.0f);
 	sunModel *= glm::rotate(glm::mat4(1.0f), 0.3f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
-	sunModel *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-	m_sphere->Update(sunModel);
+	sunModel *= glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
+	m_sun->Update(sunModel);
 
 	// plant
-	glm::mat4 plantModel = glm::mat4(1.0f);
-	plantModel *= glm::rotate(glm::mat4(1.0f), 0.6f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
-	plantModel *= glm::translate(glm::mat4(1.0f), glm::vec3(4.0f, 0.0f, 0.0f));
-	plantModel *= glm::rotate(glm::mat4(1.0f), 1.5f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
-	plantModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.45f, 0.45f, 0.45f));
-	m_sphere2->Update(plantModel);
+	//glm::mat4 plantModel = glm::mat4(1.0f);
+	//plantModel *= glm::rotate(glm::mat4(1.0f), 0.6f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+	//plantModel *= glm::translate(glm::mat4(1.0f), glm::vec3(4.0f, 0.0f, 0.0f));
+	//plantModel *= glm::rotate(glm::mat4(1.0f), 1.5f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+	//plantModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.45f, 0.45f, 0.45f));
+	//m_sphere2->Update(plantModel);
+	// planet
+	for (Planet& planet : m_planets) {
+		glm::mat4 planetModel = glm::mat4(1.0f);
+		planetModel *= glm::rotate(glm::mat4(1.0f), planet.orbitSpeed * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+		planetModel *= glm::translate(glm::mat4(1.0f), glm::vec3(planet.orbitRadius, 0.0f, 0.0f));
+		planetModel *= glm::rotate(glm::mat4(1.0f), glm::radians(planet.axialTilt), glm::vec3(0.0f, 0.0f, 1.0f));
+		planetModel *= glm::rotate(glm::mat4(1.0f), planet.rotationSpeed * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+		planetModel *= glm::scale(glm::mat4(1.0f), glm::vec3(planet.radius, planet.radius, planet.radius));
+		planet.sphere->Update(planetModel);
+	}
 
 	//moon
 	glm::mat4 moonModel = glm::mat4(1.0f);
-	moonModel *= glm::rotate(glm::mat4(1.0f), 0.6f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
-	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(4.0f, 0.0f, 0.0f));
+	moonModel *= glm::rotate(glm::mat4(1.0f), 0.60f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(13.00f, 0.0f, 0.0f));
 	moonModel *= glm::rotate(glm::mat4(1.0f), glm::radians(25.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	moonModel *= glm::rotate(glm::mat4(1.0f), 2.0f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
-	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	moonModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.16f, 0.16f, 0.16f));
-	m_sphere3->Update(moonModel);
+	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(1.2f, 0.0f, 0.0f));
+	moonModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.097f, 0.097f, 0.097f));
+	m_moon->Update(moonModel);
 
 	//starship
 
@@ -157,6 +180,19 @@ void Graphics::HierarchicalUpdate2(double dt) {
 	shipModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.02f, 0.02f, 0.02f));
 	m_mesh->Update(shipModel);
 
+}
+
+void Graphics::AddPlanet(const std::string& name, const char* texturePath, float radius, float orbitRadius, float orbitSpeed, float rotationSpeed, float axialTilt) {
+	Planet planet;
+	planet.sphere = new Sphere(48, texturePath);
+	planet.name = name;
+	planet.radius = radius;
+	planet.orbitRadius = orbitRadius;
+	planet.orbitSpeed = orbitSpeed;
+	planet.rotationSpeed = rotationSpeed;
+	planet.axialTilt = axialTilt;
+
+	m_planets.push_back(planet);
 }
 
 void Graphics::ComputeTransforms(double dt, std::vector<float> speed, std::vector<float> dist,
@@ -205,22 +241,22 @@ void Graphics::Render()
 		}
 	}
 
-	if (m_sphere != NULL) {
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere->GetModel()));
-		if (m_sphere->hasTex) {
+	if (m_sun != NULL) {
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sun->GetModel()));
+		if (m_sun->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, m_sphere->getTextureID());
+			glBindTexture(GL_TEXTURE_2D, m_sun->getTextureID());
 			GLuint sampler = m_shader->GetUniformLocation("sp");
 			if (sampler == INVALID_UNIFORM_LOCATION)
 			{
 				printf("Sampler Not found not found\n");
 			}
 			glUniform1i(sampler, 0);
-			m_sphere->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+			m_sun->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
 	}
 
-	if (m_sphere2 != NULL) {
+	/*if (m_sphere2 != NULL) {
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere2->GetModel()));
 		if (m_sphere2->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
@@ -233,22 +269,38 @@ void Graphics::Render()
 			glUniform1i(sampler, 0);
 			m_sphere2->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
+	}*/
+	for (Planet& planet : m_planets) {
+		if (planet.sphere != NULL) {
+			glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(planet.sphere->GetModel()));
+			if (planet.sphere->hasTex) {
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, planet.sphere->getTextureID());
+				GLuint sampler = m_shader->GetUniformLocation("sp");
+				if (sampler == INVALID_UNIFORM_LOCATION)
+				{
+					printf("Sampler Not found not found\n");
+				}
+				glUniform1i(sampler, 0);
+				planet.sphere->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+			}
+		}
 	}
 
 
 	// Render Moon
-	if (m_sphere3 != NULL) {
-		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sphere3->GetModel()));
-		if (m_sphere3->hasTex) {
+	if (m_moon != NULL) {
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_moon->GetModel()));
+		if (m_moon->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, m_sphere3->getTextureID());
+			glBindTexture(GL_TEXTURE_2D, m_moon->getTextureID());
 			GLuint sampler = m_shader->GetUniformLocation("sp");
 			if (sampler == INVALID_UNIFORM_LOCATION)
 			{
 				printf("Sampler Not found not found\n");
 			}
 			glUniform1i(sampler, 0);
-			m_sphere3->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+			m_moon->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
 	}
 

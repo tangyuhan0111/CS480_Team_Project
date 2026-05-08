@@ -70,7 +70,6 @@ void Engine::ProcessInput()
     if (glfwGetKey(m_window->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(m_window->getWindow(), true);
 
-
     //exploration mode
 
     m_graphics->getCamera()->Exploration(m_window->getWindow(), deltaTime); //calls exploration controls
@@ -87,8 +86,13 @@ void Engine::ProcessInput()
 
     m_graphics->getCamera()->UpdateMovement(deltaTime); //updates camera movement (commented for now since the camera will be moving forward out of view)
 
-    //planetary observation mode
-
+	//planetary observation mode
+    bool tabPressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_TAB) == GLFW_PRESS;
+    if (tabPressed && !isTabPressed)
+    {
+        m_graphics->getCamera()->ToggleFirstPerson(!m_graphics->getCamera()->IsFirstPersonMode());
+    }
+    isTabPressed = tabPressed;
 }
 
 void Engine::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)

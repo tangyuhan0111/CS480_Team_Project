@@ -59,23 +59,21 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Local.props" Condition="Exists('Local.props')" Label="LocalProject" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Local.props" Condition="Exists('Local.props')" Label="LocalProject" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Local.props" Condition="Exists('Local.props')" Label="LocalProject" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Local.props" Condition="Exists('Local.props')" Label="LocalProject" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>D:\2026spring\CS 480\Code\CS480TemplateCode\include;$(ExternalIncludePath)</ExternalIncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ExternalIncludePath>D:\2026spring\CS 480\Code\CS480TemplateCode\include;$(ExternalIncludePath)</ExternalIncludePath>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -114,8 +112,6 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\2026spring\CS 480\Code\CS480TemplateCode\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;glfw3.lib;soil2-debug.lib;opengl32.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,8 +128,6 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\2026spring\CS 480\Code\CS480TemplateCode\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;glfw3.lib;soil2-debug.lib;opengl32.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -144,6 +138,7 @@
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="object.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="skybox.cpp" />
     <ClCompile Include="sphere.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="window.cpp" />
@@ -156,6 +151,7 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="object.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="skybox.h" />
     <ClInclude Include="sphere.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="window.h" />

@@ -31,7 +31,6 @@ class Engine
     int m_WINDOW_HEIGHT;
     bool m_FULLSCREEN;
 
-
     Graphics *m_graphics;
 
     bool m_running;
@@ -39,6 +38,7 @@ class Engine
     float lastX = 0.0f;
     float lastY = 0.0f;
     float m_lastFrame = 0.0f;
+    bool isTabPressed = false;
 };
 
 #endif // ENGINE_H

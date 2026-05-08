@@ -30,7 +30,7 @@ bool Camera::Initialize(int w, int h)
                                  //float(w)/float(h), //Aspect Ratio, so Circles stay Circular
                                  aspectRatio,
                                  0.01f, //Distance to the near plane, normally a small value like this
-                                 100.0f); //Distance to the far plane, 
+                                 500.0f); //Distance to the far plane, 
   return true;
 }
 
@@ -45,8 +45,21 @@ glm::mat4 Camera::GetView()
 }
 
 void Camera::Update() {
-    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    projection = glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 100.0f);
+
+    if (isFirstPersonToggled)
+    {
+        FirstPersonCameraView();
+    }
+    else
+    {
+        ThirdPersonCameraView();
+    }
+}
+
+void Camera::ToggleFirstPerson(bool enabled)
+{
+    isFirstPersonToggled = enabled;
+    Update();
 }
 
 void Camera::MoveForward(float amount) {
@@ -108,7 +121,7 @@ void Camera::Zoom(float yoffset) {
     if (fov > 90.0f) {
         fov = 90.0f;
     }
-    ThirdPersonCameraView();
+    Update();
 }
 
 void Camera::Exploration(GLFWwindow* window, float dt)
@@ -169,7 +182,7 @@ void Camera::UpdateMovement(float dt)
 {
     starshipPos += cameraFront * currentSpeed * dt; //moves the starship forward
 
-    ThirdPersonCameraView();
+    Update();
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset) 
@@ -213,7 +226,7 @@ void Camera::updateCameraVectors()
     glm::mat4 rollRotation = glm::rotate(glm::mat4(1.0f), glm::radians(roll), cameraFront);
     cameraUp = glm::normalize(glm::vec3(rollRotation * glm::vec4(baseUp, 0.0f)));
 
-    ThirdPersonCameraView();
+    Update();
 }
 
 void Camera::ThirdPersonCameraView() 
@@ -222,5 +235,14 @@ void Camera::ThirdPersonCameraView()
 
     view = glm::lookAt(cameraPos, starshipPos, cameraUp); //positions the camera behind and above the starship
 
-    projection = glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 100.0f);
+    projection = glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 500.0f);
+}
+
+void Camera::FirstPersonCameraView()
+{
+    cameraPos = starshipPos + cameraUp * firstPersonHeightAboveStarship + cameraFront * firstPersonForwardOffset;
+
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp); //positions the camera at the starship's position
+
+	projection = glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 500.0f);
 }
