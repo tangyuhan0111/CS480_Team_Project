@@ -14,8 +14,10 @@ class Camera
     glm::vec3 GetStarshipPos() const { return starshipPos; }
     glm::vec3 GetStarshipFront() const { return cameraFront; }
     glm::vec3 GetStarshipUp() const { return cameraUp; }
+    bool IsFirstPersonMode() const { return isFirstPersonToggled; }
 
     void Update();
+    void ToggleFirstPerson(bool enabled);
 
     void MoveForward(float amount);
     void MoveBackward(float amount);
@@ -30,6 +32,7 @@ class Camera
     void ProcessMouseMovement(float xoffset, float yoffset);
     void updateCameraVectors();
     void ThirdPersonCameraView();
+    void FirstPersonCameraView();
   
   private:
 
@@ -48,6 +51,10 @@ class Camera
     float thirdPersonDistancefromStarship = 10.0f;
     float thirdPersonHeightAboveStarship = 4.0f;
 
+	//first person camera
+    float firstPersonHeightAboveStarship = 0.8f;
+    float firstPersonForwardOffset = 0.6f;
+
     float yaw = 90.0f; //turning of an object horizontally
     float pitch = 0.0f; //tilts an object upward or downward
     float fov = 40.0f;
@@ -64,6 +71,10 @@ class Camera
     float roll = 0.0f; //tilts the wings of the starship 
     float starshipTurnSpeed = 60.0f; //turn speed 
     float rollSpeed = 50.0f; //roll speed
+
+    //planetary observation mode 
+    bool isFirstPersonToggled = false; 
+
 };
 
 #endif /* CAMERA_H */
