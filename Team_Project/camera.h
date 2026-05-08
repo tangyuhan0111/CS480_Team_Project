@@ -14,6 +14,7 @@ class Camera
     glm::vec3 GetStarshipPos() const { return starshipPos; }
     glm::vec3 GetStarshipFront() const { return cameraFront; }
     glm::vec3 GetStarshipUp() const { return cameraUp; }
+    glm::vec3 GetCameraPos() const { return cameraPos; }
     bool IsFirstPersonMode() const { return isFirstPersonToggled; }
 
     void Update();
