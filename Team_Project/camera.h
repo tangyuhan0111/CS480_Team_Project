@@ -15,9 +15,11 @@ class Camera
     glm::vec3 GetStarshipFront() const { return cameraFront; }
     glm::vec3 GetStarshipUp() const { return cameraUp; }
     bool IsFirstPersonMode() const { return isFirstPersonToggled; }
+	bool IsObservationMode() const { return isObservationModeToggled; }
 
     void Update();
     void ToggleFirstPerson(bool enabled);
+	void ToggleObservationMode(bool enabled);
 
     void MoveForward(float amount);
     void MoveBackward(float amount);
@@ -33,6 +35,12 @@ class Camera
     void updateCameraVectors();
     void ThirdPersonCameraView();
     void FirstPersonCameraView();
+    void ObservationModeView();
+	void SetObservationTarget(const glm::vec3& target);
+    void UpdateObservationTargetPosition(const glm::vec3& target);
+	void UpdateObservationCamera(float dt);
+	void ResetObservationCamera();
+    void RotateAroundPlanet();
   
   private:
 
@@ -55,7 +63,7 @@ class Camera
     float firstPersonHeightAboveStarship = 0.8f;
     float firstPersonForwardOffset = 0.6f;
 
-    float yaw = 90.0f; //turning of an object horizontally
+    float yaw = -90.0f; //turning of an object horizontally
     float pitch = 0.0f; //tilts an object upward or downward
     float fov = 40.0f;
     float aspectRatio = 1.0f;
@@ -69,11 +77,20 @@ class Camera
 
     //exploration mode (yaw, pitch and roll)
     float roll = 0.0f; //tilts the wings of the starship 
-    float starshipTurnSpeed = 60.0f; //turn speed 
+    float starshipTurnSpeed = 50.0f; //turn speed 
     float rollSpeed = 50.0f; //roll speed
 
     //planetary observation mode 
     bool isFirstPersonToggled = false; 
+	bool isObservationModeToggled = false; //not used yet but can be used to toggle between first person and observation mode
+	bool isPlanetLockedOn = false; //not used yet but can be used to lock the camera onto a planet when in first person mode
+	glm::vec3 PlanetTargetPos; //the position of the planet being observed
+    float observationYaw;
+	float observationPitch;
+    float observationRadius;
+    float defaultObservationYaw;
+	float defaultObservationPitch;
+	float defaultObservationRadius;
 
 };
 

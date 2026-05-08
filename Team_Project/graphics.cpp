@@ -137,6 +137,7 @@ void Graphics::HierarchicalUpdate2(double dt) {
 	//plantModel *= glm::rotate(glm::mat4(1.0f), 1.5f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
 	//plantModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.45f, 0.45f, 0.45f));
 	//m_sphere2->Update(plantModel);
+	
 	// planet
 	for (Planet& planet : m_planets) {
 		glm::mat4 planetModel = glm::mat4(1.0f);
@@ -313,6 +314,17 @@ void Graphics::Render()
 	}
 }
 
+glm::vec3 Graphics::getPlanetPosition(const std::string& planetName) const 
+{
+	for (const Planet& planet : m_planets) 
+	{
+		if (planet.name == planetName) 
+		{
+			return glm::vec3(planet.sphere->GetModel()[3]); // Extract the translation component from the model matrix
+		}
+	}
+	return glm::vec3(0.0f, 0.0f, 0.0f); // Return a default value if the planet is not found
+}
 
 bool Graphics::collectShPrLocs() {
 	bool anyProblem = true;

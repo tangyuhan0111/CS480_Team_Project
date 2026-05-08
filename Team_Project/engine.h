@@ -3,6 +3,7 @@
 
 
 #include <assert.h>
+#include <string>
 #include "window.h"
 #include "graphics.h"
 
@@ -39,6 +40,7 @@ class Engine
     float lastY = 0.0f;
     float m_lastFrame = 0.0f;
     bool isTabPressed = false;
+    std::string m_observationPlanetName;
 };
 
 #endif // ENGINE_H

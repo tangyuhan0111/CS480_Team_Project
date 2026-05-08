@@ -26,6 +26,7 @@ class Graphics
     void HierarchicalUpdate2(double dt);
     void Render();
     Camera* getCamera() { return m_camera; }
+	glm::vec3 getPlanetPosition(const std::string& planetName) const; 
 
   private:
     std::string ErrorString(GLenum error);
