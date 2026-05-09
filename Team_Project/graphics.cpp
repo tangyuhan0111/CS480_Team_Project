@@ -99,14 +99,14 @@ bool Graphics::Initialize(int width, int height)
 	m_sun = new Sphere(64, "assets\\Term Project Assets\\2k_sun.jpg");
 
 	// add all planet
-	AddPlanet("Mercury", "assets\\Term Project Assets\\Mercury.jpg", 0.138f, 5.22f, 1.20f, 1.0f, 0.0f);
-	AddPlanet("Venus", "assets\\Term Project Assets\\Venus.jpg", 0.342f, 9.77f, 0.90f, 0.8f, 177.0f);
-	AddPlanet("Earth", "assets\\Term Project Assets\\2k_earth_daymap.jpg", 0.360f, 13.50f, 0.60f, 1.5f, 23.5f);
-	AddPlanet("Mars", "assets\\Term Project Assets\\Mars.jpg", 0.192f, 20.57f, 0.50f, 1.3f, 25.0f);
-	AddPlanet("Jupiter", "assets\\Term Project Assets\\Jupiter.jpg", 4.035f, 70.25f, 0.25f, 2.2f, 3.0f);
-	AddPlanet("Saturn", "assets\\Term Project Assets\\Saturn.jpg", 3.402f, 128.75f, 0.18f, 2.0f, 26.7f);
-	AddPlanet("Uranus", "assets\\Term Project Assets\\Uranus.jpg", 1.443f, 259.07f, 0.13f, 1.4f, 97.8f);
-	AddPlanet("Neptune", "assets\\Term Project Assets\\Neptune.jpg", 1.395f, 405.95f, 0.10f, 1.3f, 28.3f);
+	AddPlanet("Mercury", "assets\\Term Project Assets\\Mercury.jpg", 0.138f, 5.22f, 0.60f, 1.0f, 0.0f);
+	AddPlanet("Venus", "assets\\Term Project Assets\\Venus.jpg", 0.342f, 9.77f, 0.45f, 0.8f, 177.0f);
+	AddPlanet("Earth", "assets\\Term Project Assets\\2k_earth_daymap.jpg", 0.360f, 13.50f, 0.30f, 1.5f, 23.5f);
+	AddPlanet("Mars", "assets\\Term Project Assets\\Mars.jpg", 0.192f, 20.57f, 0.25f, 1.3f, 25.0f);
+	AddPlanet("Jupiter", "assets\\Term Project Assets\\Jupiter.jpg", 4.035f, 70.25f, 0.125f, 2.2f, 3.0f);
+	AddPlanet("Saturn", "assets\\Term Project Assets\\Saturn.jpg", 3.402f, 128.75f, 0.09f, 2.0f, 26.7f);
+	AddPlanet("Uranus", "assets\\Term Project Assets\\Uranus.jpg", 1.443f, 259.07f, 0.065f, 1.4f, 97.8f);
+	AddPlanet("Neptune", "assets\\Term Project Assets\\Neptune.jpg", 1.395f, 405.95f, 0.05f, 1.3f, 28.3f);
 
 	// The Earth
 	//m_sphere2 = new Sphere(48, "assets\\2k_earth_daymap.jpg");
@@ -151,10 +151,10 @@ void Graphics::HierarchicalUpdate2(double dt) {
 
 	//moon
 	glm::mat4 moonModel = glm::mat4(1.0f);
-	moonModel *= glm::rotate(glm::mat4(1.0f), 0.60f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+	moonModel *= glm::rotate(glm::mat4(1.0f), 0.30f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
 	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(13.00f, 0.0f, 0.0f));
 	moonModel *= glm::rotate(glm::mat4(1.0f), glm::radians(25.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	moonModel *= glm::rotate(glm::mat4(1.0f), 2.0f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+	moonModel *= glm::rotate(glm::mat4(1.0f), 1.0f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
 	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(1.2f, 0.0f, 0.0f));
 	moonModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.097f, 0.097f, 0.097f));
 	m_moon->Update(moonModel);
@@ -217,6 +217,14 @@ void Graphics::Render()
 	// Start the correct program
 	m_shader->Enable();
 
+	// pass the value of uniform to shader
+	glm::vec3 cameraPos = m_camera->GetCameraPos();
+	glUniform3f(m_lightPos, 0.0f, 0.0f, 0.0f);
+	glUniform3fv(m_viewPos, 1, glm::value_ptr(cameraPos));
+	glUniform1f(m_ambientStrength, 0.15f);
+	glUniform1f(m_specularStrength, 0.35f);
+	glUniform1f(m_shininess, 32.0f);
+
 	// Send in the projection and view to the shader (stay the same while camera intrinsic(perspective) and extrinsic (view) parameters are the same
 	glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetProjection()));
 	glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(m_camera->GetView()));
@@ -243,6 +251,7 @@ void Graphics::Render()
 	}
 
 	if (m_sun != NULL) {
+		glUniform1i(m_isSun, true); // is Sun bool true
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_sun->GetModel()));
 		if (m_sun->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
@@ -271,6 +280,7 @@ void Graphics::Render()
 			m_sphere2->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
 	}*/
+	glUniform1i(m_isSun, false); // is Sun bool false
 	for (Planet& planet : m_planets) {
 		if (planet.sphere != NULL) {
 			glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(planet.sphere->GetModel()));
@@ -290,6 +300,7 @@ void Graphics::Render()
 
 
 	// Render Moon
+	glUniform1i(m_isSun, false); // is Sun bool false
 	if (m_moon != NULL) {
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_moon->GetModel()));
 		if (m_moon->hasTex) {
@@ -381,6 +392,13 @@ bool Graphics::collectShPrLocs() {
 		printf("hasTexture uniform not found\n");
 		anyProblem = false;
 	}
+
+	m_lightPos = m_shader->GetUniformLocation("lightPos");
+	m_viewPos = m_shader->GetUniformLocation("viewPos");
+	m_ambientStrength = m_shader->GetUniformLocation("ambientStrength");
+	m_specularStrength = m_shader->GetUniformLocation("specularStrength");
+	m_shininess = m_shader->GetUniformLocation("shininess");
+	m_isSun = m_shader->GetUniformLocation("isSun");
 
 	return anyProblem;
 }

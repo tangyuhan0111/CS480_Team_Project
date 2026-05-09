@@ -50,6 +50,13 @@ class Graphics
     GLint m_tcAttrib;
     GLint m_hasTexture;
 
+    GLint m_lightPos;
+    GLint m_viewPos;
+    GLint m_ambientStrength;
+    GLint m_specularStrength;
+    GLint m_shininess;
+    GLint m_isSun;
+
     /*Sphere* m_sphere;
     Sphere* m_sphere2;
     Sphere* m_sphere3;*/
