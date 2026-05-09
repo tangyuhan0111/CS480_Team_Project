@@ -83,6 +83,9 @@ bool Shader::AddShader(GLenum ShaderType)
             uniform float specularStrength;
             uniform float shininess;
             uniform bool isSun;
+            uniform bool isEmissive;
+            uniform vec3 emissiveColor;
+            uniform float emissiveStrength;
 
             in vec3 color;
             in vec2 tc;
@@ -99,6 +102,12 @@ bool Shader::AddShader(GLenum ShaderType)
                     baseColor = texture(sp, tc);
                 else
                     baseColor = vec4(color, 1.0);
+
+                if (isEmissive)
+                {
+                    frag_color = vec4(emissiveColor * emissiveStrength, 1.0);
+                    return;
+                }
 
                 if (isSun)
                 {

@@ -58,6 +58,11 @@ class Graphics
     GLint m_specularStrength;
     GLint m_shininess;
     GLint m_isSun;
+
+    GLint m_isEmissive;
+    GLint m_emissiveColor;
+    GLint m_emissiveStrength;
+
     std::vector<glm::mat4> m_innerBeltMatrix;
 	std::vector<glm::mat4> m_outerBeltMatrix;
 	int innerBeltCount = 3000;
@@ -82,6 +87,8 @@ class Graphics
 
     Mesh* m_mesh;
     Skybox* m_skybox;
+    std::vector<Sphere*> m_engineGlows;
+    std::vector<Sphere*> m_engineTrailParticles;
 };
 
 #endif /* GRAPHICS_H */

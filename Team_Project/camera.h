@@ -15,6 +15,8 @@ class Camera
     glm::vec3 GetStarshipFront() const { return cameraFront; }
     glm::vec3 GetStarshipUp() const { return cameraUp; }
     glm::vec3 GetCameraPos() const { return cameraPos; }
+    float GetCurrentSpeed() const { return currentSpeed; }
+    float GetMaxSpeed() const { return maxSpeed; }
     bool IsFirstPersonMode() const { return isFirstPersonToggled; }
 	bool IsObservationMode() const { return isObservationModeToggled; }
 

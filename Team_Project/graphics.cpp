@@ -22,6 +22,14 @@ Graphics::~Graphics()
 	delete m_mesh;
 	delete m_skybox;
 	delete m_asteroidBelt;
+	for (Sphere* glow : m_engineGlows)
+	{
+		delete glow;
+	}
+	for (Sphere* particle : m_engineTrailParticles)
+	{
+		delete particle;
+	}
 	for (Planet& planet : m_planets) {
 		delete planet.sphere;
 	}
@@ -96,6 +104,16 @@ bool Graphics::Initialize(int width, int height)
 
 	// Starship
 	m_mesh = new Mesh(glm::vec3(2.0f, 3.0f, -5.0f), "assets\\SpaceShip-1.obj", "assets\\SpaceShip-1.png");
+
+	for (int i = 0; i < 6; i++)
+	{
+		m_engineGlows.push_back(new Sphere(16));
+	}
+
+	for (int i = 0; i < 24; i++)
+	{
+		m_engineTrailParticles.push_back(new Sphere(12));
+	}
 
 	// The Sun
 	m_sun = new Sphere(64, "assets\\Term Project Assets\\2k_sun.jpg");
@@ -191,6 +209,61 @@ void Graphics::HierarchicalUpdate2(double dt) {
 	shipModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.02f, 0.02f, 0.02f));
 	m_mesh->Update(shipModel);
 
+	std::vector<glm::vec3> engineOffsets = {
+		glm::vec3(-0.34f, 0.0f, -0.54f),
+		glm::vec3(-0.27f, 0.0f, -0.58f),
+		glm::vec3(-0.19f, 0.0f, -0.61f),
+
+		glm::vec3(0.19f, 0.0f, -0.61f),
+		glm::vec3(0.27f, 0.0f, -0.58f),
+		glm::vec3(0.34f, 0.0f, -0.54f)
+	};
+
+	for (size_t i = 0; i < m_engineGlows.size() && i < engineOffsets.size(); i++)
+	{
+		glm::vec3 worldOffset =
+			shipRight * engineOffsets[i].x +
+			shipUp * engineOffsets[i].y +
+			shipFront * engineOffsets[i].z;
+
+		glm::mat4 engineModel = glm::mat4(1.0f);
+		engineModel *= glm::translate(glm::mat4(1.0f), shipPos + worldOffset);
+		engineModel *= shipOrientation;
+		engineModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.025f, 0.025f, 0.025f));
+
+		m_engineGlows[i]->Update(engineModel);
+	}
+
+	int particleIndex = 0;
+
+	for (size_t engineIndex = 0; engineIndex < engineOffsets.size(); engineIndex++)
+	{
+		for (int trail = 0; trail < 4; trail++)
+		{
+			if (particleIndex >= m_engineTrailParticles.size())
+			{
+				break;
+			}
+
+			float trailDistance = 0.08f + 0.08f * trail;
+			float trailSize = 0.022f - 0.0035f * trail;
+
+			glm::vec3 particleOffset = engineOffsets[engineIndex] - glm::vec3(0.0f, 0.0f, trailDistance);
+
+			glm::vec3 worldOffset =
+				shipRight * particleOffset.x +
+				shipUp * particleOffset.y +
+				shipFront * particleOffset.z;
+
+			glm::mat4 particleModel = glm::mat4(1.0f);
+			particleModel *= glm::translate(glm::mat4(1.0f), shipPos + worldOffset);
+			particleModel *= shipOrientation;
+			particleModel *= glm::scale(glm::mat4(1.0f), glm::vec3(trailSize, trailSize, trailSize));
+
+			m_engineTrailParticles[particleIndex]->Update(particleModel);
+			particleIndex++;
+		}
+	}
 }
 
 void Graphics::AddPlanet(const std::string& name, const char* texturePath, float radius, float orbitRadius, float orbitSpeed, float rotationSpeed, float axialTilt) {
@@ -296,6 +369,8 @@ void Graphics::Render()
 	}*/
 
 	if (m_mesh != NULL) {
+		glUniform1i(m_isSun, false);
+		glUniform1i(m_isEmissive, false);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_mesh->GetModel()));
 		if (m_mesh->hasTex) {
 			glActiveTexture(GL_TEXTURE0);
@@ -308,6 +383,40 @@ void Graphics::Render()
 			glUniform1i(sampler, 0);
 			m_mesh->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
+	}
+
+	if (!m_engineGlows.empty()) {
+		float speedRatio = m_camera->GetCurrentSpeed() / m_camera->GetMaxSpeed();
+
+		if (speedRatio < 0.0f) speedRatio = 0.0f;
+		if (speedRatio > 1.0f) speedRatio = 1.0f;
+
+		float glowStrength = 0.5f + speedRatio * 2.5f;
+
+		glUniform1i(m_isSun, false);
+		glUniform1i(m_isEmissive, true);
+		glUniform3f(m_emissiveColor, 0.65f, 0.90f, 1.0f);
+		glUniform1f(m_emissiveStrength, glowStrength);
+
+		for (Sphere* glow : m_engineGlows)
+		{
+			glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(glow->GetModel()));
+			glow->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+		}
+
+		if (speedRatio > 0.01f)
+		{
+			float particleStrength = glowStrength * 0.65f;
+			glUniform1f(m_emissiveStrength, particleStrength);
+
+			for (Sphere* particle : m_engineTrailParticles)
+			{
+				glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(particle->GetModel()));
+				particle->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+			}
+		}
+
+		glUniform1i(m_isEmissive, false);
 	}
 
 	if (m_sun != NULL) {
@@ -462,6 +571,9 @@ bool Graphics::collectShPrLocs() {
 	m_specularStrength = m_shader->GetUniformLocation("specularStrength");
 	m_shininess = m_shader->GetUniformLocation("shininess");
 	m_isSun = m_shader->GetUniformLocation("isSun");
+	m_isEmissive = m_shader->GetUniformLocation("isEmissive");
+	m_emissiveColor = m_shader->GetUniformLocation("emissiveColor");
+	m_emissiveStrength = m_shader->GetUniformLocation("emissiveStrength");
 
 	return anyProblem;
 }
