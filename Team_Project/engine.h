@@ -40,6 +40,7 @@ class Engine
     float lastY = 0.0f;
     float m_lastFrame = 0.0f;
     bool isTabPressed = false;
+    bool isKeyPressed[8] = { false };
     std::string m_observationPlanetName;
 };
 
