@@ -45,6 +45,10 @@ bool Shader::AddShader(GLenum ShaderType)
             layout (location = 0) in vec3 v_position;
             layout (location = 1) in vec3 v_color;
             layout (location = 2) in vec2 v_tc;
+            layout (location = 3) in vec4 i_modelCol0;
+            layout (location = 4) in vec4 i_modelCol1;
+            layout (location = 5) in vec4 i_modelCol2;
+            layout (location = 6) in vec4 i_modelCol3;
 
             out vec3 color;
             out vec2 tc;
@@ -54,13 +58,17 @@ bool Shader::AddShader(GLenum ShaderType)
             uniform mat4 projectionMatrix;
             uniform mat4 viewMatrix;
             uniform mat4 modelMatrix;
+            uniform bool useInstancing;
 
             void main(void)
             {
-                vec4 worldPosition = modelMatrix * vec4(v_position, 1.0);
+                mat4 instanceModel = mat4(i_modelCol0, i_modelCol1, i_modelCol2, i_modelCol3);
+                mat4 worldModel = useInstancing ? instanceModel : modelMatrix;
+
+                vec4 worldPosition = worldModel * vec4(v_position, 1.0);
 
                 fragPos = vec3(worldPosition);
-                normal = mat3(transpose(inverse(modelMatrix))) * v_color;
+                normal = mat3(transpose(inverse(worldModel))) * v_color;
 
                 color = v_color;
                 tc = v_tc;

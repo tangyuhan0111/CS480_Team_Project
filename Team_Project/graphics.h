@@ -58,11 +58,10 @@ class Graphics
     GLint m_specularStrength;
     GLint m_shininess;
     GLint m_isSun;
-
     GLint m_isEmissive;
     GLint m_emissiveColor;
     GLint m_emissiveStrength;
-
+    GLint m_useInstancing;
     std::vector<glm::mat4> m_innerBeltMatrix;
 	std::vector<glm::mat4> m_outerBeltMatrix;
 	int innerBeltCount = 3000;

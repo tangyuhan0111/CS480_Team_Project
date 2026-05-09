@@ -5,6 +5,8 @@ Sphere::Sphere()
     init(48);
     setupVertices();
     setupBuffers();
+    m_innerAsteroidVBO = 0;
+    m_outerAsteroidVBO = 0;
     //setupModelMatrix(glm::vec3(0., 0., 0.), 0., 1.);
 }
 
@@ -15,6 +17,8 @@ Sphere::Sphere(int prec) { // prec is precision, or number of slices
     setupBuffers();
     //setupModelMatrix(glm::vec3(0., 0., 0.), 0., 1.);
     hasTex = false;
+    m_innerAsteroidVBO = 0;
+    m_outerAsteroidVBO = 0;
 }
 
 Sphere::Sphere(int prec, const char* fname) { // prec is precision, or number of slices
@@ -26,10 +30,18 @@ Sphere::Sphere(int prec, const char* fname) { // prec is precision, or number of
 
         // load texture from file
     m_texture = new Texture(fname);
-    if (m_texture)
+    if (m_texture) 
+    {
         hasTex = true;
-    else
+    }
+        
+    else 
+    {
         hasTex = false;
+    }
+       
+    m_innerAsteroidVBO = 0;
+    m_outerAsteroidVBO = 0;
 }
 
 
@@ -131,6 +143,126 @@ void Sphere::setupModelMatrix(glm::vec3 pivot, float angle, float scale) {
     model = glm::translate(glm::mat4(1.0f), pivotLocation);
     model *= glm::rotate(glm::mat4(1.f), angle, glm::vec3(0., 1., 0));
     model *= glm::scale(glm::vec3(scale, scale, scale));
+}
+
+void Sphere::SetupInstancedBuffers(GLuint& instanceVBO, const std::vector<glm::mat4>& instanceMatrices) {
+	glBindVertexArray(vao);
+
+    if (instanceVBO == 0)
+    {
+        glGenBuffers(1, &instanceVBO);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, instanceMatrices.size() * sizeof(glm::mat4), instanceMatrices.data(), GL_STATIC_DRAW);
+
+	std::size_t vec4Size = sizeof(glm::vec4);
+
+	glEnableVertexAttribArray(3); // Assuming location 3 is for the instance matrix
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+
+	glEnableVertexAttribArray(4); // Assuming location 4 is for the instance matrix
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(vec4Size));
+
+	glEnableVertexAttribArray(5); // Assuming location 5 is for the instance matrix
+	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * vec4Size));
+
+    glEnableVertexAttribArray(6);
+	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * vec4Size));
+
+	glVertexAttribDivisor(3, 1); // Update per instance
+	glVertexAttribDivisor(4, 1); // Update per instance
+	glVertexAttribDivisor(5, 1); // Update per instance
+	glVertexAttribDivisor(6, 1); // Update per instance
+
+	glBindVertexArray(0);
+
+    //// Set up vertex attribute pointers for the instance matrices
+    //for (int i = 0; i < 4; i++) {
+    //    glEnableVertexAttribArray(3 + i); // Assuming location 3-6 are for the instance matrix
+    //    glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(i * sizeof(glm::vec4)));
+    //    glVertexAttribDivisor(3 + i, 1); // Update per instance
+    //}
+}
+
+void Sphere::RenderInstanced(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLint hasTexLoc, GLuint instanceVBO, GLsizei instanceCount) {
+    glBindVertexArray(vao);
+
+    // Enable vertex attribute arrays for each vertex attrib
+    glEnableVertexAttribArray(posAttribLoc);
+    glEnableVertexAttribArray(colAttribLoc);
+    glEnableVertexAttribArray(tcAttribLoc);
+
+    // Bind your VBO
+    glBindBuffer(GL_ARRAY_BUFFER, VB);
+
+    // Set vertex attribute pointers to the load correct data. Update here to load the correct attributes.
+    glVertexAttribPointer(posAttribLoc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+    glVertexAttribPointer(colAttribLoc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glVertexAttribPointer(tcAttribLoc, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texcoord));
+
+    // If has texture, set up texture unit(s): update here for texture rendering
+    if (m_texture != NULL) {
+        glUniform1i(hasTexLoc, true);
+        m_texture->bind(GL_TEXTURE0);
+    }
+    else 
+    {
+        glUniform1i(hasTexLoc, false);
+    }
+        
+    // Bind your Element Array
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+
+    std::size_t vec4Size = sizeof(glm::vec4);
+
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(vec4Size));
+
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * vec4Size));
+
+    glEnableVertexAttribArray(6);
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * vec4Size));
+
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
+
+    // Render instanced
+    glDrawElementsInstanced(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0, instanceCount);
+
+    // Disable vertex arrays
+    glDisableVertexAttribArray(posAttribLoc);
+    glDisableVertexAttribArray(colAttribLoc);
+    glDisableVertexAttribArray(tcAttribLoc);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Sphere::SetupInnerInstances(const std::vector<glm::mat4>& matrices) {
+    SetupInstancedBuffers(m_innerAsteroidVBO, matrices);
+}
+
+void Sphere::SetupOuterInstances(const std::vector<glm::mat4>& matrices) {
+    SetupInstancedBuffers(m_outerAsteroidVBO, matrices);
+}
+
+void Sphere::RenderInnerInstanced(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLint hasTextureLoc, GLsizei instanceCount)
+{
+    RenderInstanced(posAttribLoc, colAttribLoc, tcAttribLoc, hasTextureLoc, m_innerAsteroidVBO, instanceCount);
+}
+
+void Sphere::RenderOuterInstanced(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLint hasTextureLoc, GLsizei instanceCount)
+{
+    RenderInstanced(posAttribLoc, colAttribLoc, tcAttribLoc, hasTextureLoc, m_outerAsteroidVBO, instanceCount);
 }
 
 void Sphere::Update(glm::mat4 matModel) {

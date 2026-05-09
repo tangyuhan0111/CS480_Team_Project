@@ -10,6 +10,12 @@ public:
 
     void Render(GLint positionAttribLoc, GLint colorAttribLoc);
     void Render(GLint positionAttribLoc, GLint colorAttribLoc, GLint tcAttribLoc, GLint hasTex);
+    void SetupInnerInstances(const std::vector<glm::mat4>& matrices);
+    void SetupOuterInstances(const std::vector<glm::mat4>& matrices);
+    void RenderInnerInstanced(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLint hasTextureLoc, GLsizei instanceCount);
+    void RenderOuterInstanced(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLint hasTextureLoc, GLsizei instanceCount);
+    void SetupInstancedBuffers(GLuint& instanceVBO, const std::vector<glm::mat4>& instanceMatrices);
+	void RenderInstanced(GLint positionAttribLoc, GLint colorAttribLoc, GLint tcAttribLoc, GLint hasTex, GLuint instanceVBO, GLsizei instanceCount);
 
     glm::mat4 GetModel() { return model; }
     void Update(glm::mat4 matModel);
@@ -39,12 +45,15 @@ private:
 
 
     GLuint vao;
+	GLuint m_innerAsteroidVBO;
+	GLuint m_outerAsteroidVBO;
 
     float angle;
 
     void setupVertices();
     void setupBuffers();
     void setupModelMatrix(glm::vec3 pivotLoc, float angle, float scale);
+	
 
     int numVertices;
     int numIndices;
