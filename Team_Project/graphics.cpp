@@ -10,6 +10,7 @@ Graphics::Graphics()
 	m_mesh = nullptr;
 	m_skybox = nullptr;
 	m_asteroidBelt = nullptr;
+	m_comet = nullptr;
 }
 
 Graphics::~Graphics()
@@ -33,6 +34,7 @@ Graphics::~Graphics()
 	for (Planet& planet : m_planets) {
 		delete planet.sphere;
 	}
+	delete m_comet;
 }
 
 bool Graphics::Initialize(int width, int height)
@@ -118,6 +120,9 @@ bool Graphics::Initialize(int width, int height)
 	// The Sun
 	m_sun = new Sphere(64, "assets\\Term Project Assets\\2k_sun.jpg");
 
+	// the comet
+	m_comet = new Sphere(32, "assets\\Term Project Assets\\Ceres.jpg");
+
 	//aseroid belt
 	m_asteroidBelt = new Sphere(48, "assets\\Term Project Assets\\Mars.jpg");
 
@@ -127,14 +132,14 @@ bool Graphics::Initialize(int width, int height)
 	GenerateAsteroidBelt(outerBeltCount, 100.0f, 150.0f, m_outerBeltMatrix); //generate outer belt with 5000 asteroids between radius 100 and 150
 
 	// add all planet
-	AddPlanet("Mercury", "assets\\Term Project Assets\\Mercury.jpg", 0.138f, 5.22f, 0.60f, 1.0f, 0.0f);
-	AddPlanet("Venus", "assets\\Term Project Assets\\Venus.jpg", 0.342f, 9.77f, 0.45f, 0.8f, 177.0f);
-	AddPlanet("Earth", "assets\\Term Project Assets\\2k_earth_daymap.jpg", 0.360f, 13.50f, 0.30f, 1.5f, 23.5f);
-	AddPlanet("Mars", "assets\\Term Project Assets\\Mars.jpg", 0.192f, 20.57f, 0.25f, 1.3f, 25.0f);
-	AddPlanet("Jupiter", "assets\\Term Project Assets\\Jupiter.jpg", 4.035f, 70.25f, 0.125f, 2.2f, 3.0f);
-	AddPlanet("Saturn", "assets\\Term Project Assets\\Saturn.jpg", 3.402f, 128.75f, 0.09f, 2.0f, 26.7f);
-	AddPlanet("Uranus", "assets\\Term Project Assets\\Uranus.jpg", 1.443f, 259.07f, 0.065f, 1.4f, 97.8f);
-	AddPlanet("Neptune", "assets\\Term Project Assets\\Neptune.jpg", 1.395f, 405.95f, 0.05f, 1.3f, 28.3f);
+	AddPlanet("Mercury", "assets\\Term Project Assets\\Mercury.jpg", 0.207f, 6.53f, 0.60f, 1.0f, 0.0f);
+	AddPlanet("Venus", "assets\\Term Project Assets\\Venus.jpg", 0.513f, 12.21f, 0.45f, 0.8f, 177.0f);
+	AddPlanet("Earth", "assets\\Term Project Assets\\2k_earth_daymap.jpg", 0.540f, 16.88f, 0.30f, 1.5f, 23.5f);
+	AddPlanet("Mars", "assets\\Term Project Assets\\Mars.jpg", 0.288f, 25.71f, 0.25f, 1.3f, 25.0f);
+	AddPlanet("Jupiter", "assets\\Term Project Assets\\Jupiter.jpg", 6.053f, 87.81f, 0.125f, 2.2f, 3.0f);
+	AddPlanet("Saturn", "assets\\Term Project Assets\\Saturn.jpg", 5.103f, 160.94f, 0.09f, 2.0f, 26.7f);
+	AddPlanet("Uranus", "assets\\Term Project Assets\\Uranus.jpg", 2.165f, 323.84f, 0.065f, 1.4f, 97.8f);
+	AddPlanet("Neptune", "assets\\Term Project Assets\\Neptune.jpg", 2.093f, 507.44f, 0.05f, 1.3f, 28.3f);
 
 	// The Earth
 	//m_sphere2 = new Sphere(48, "assets\\2k_earth_daymap.jpg");
@@ -155,7 +160,7 @@ void Graphics::HierarchicalUpdate2(double dt) {
 	//sun
 	glm::mat4 sunModel = glm::mat4(1.0f);
 	sunModel *= glm::rotate(glm::mat4(1.0f), 0.3f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
-	sunModel *= glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
+	sunModel *= glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f));
 	m_sun->Update(sunModel);
 
 	// plant
@@ -177,14 +182,29 @@ void Graphics::HierarchicalUpdate2(double dt) {
 		planet.sphere->Update(planetModel);
 	}
 
+	// comet
+	if (m_comet != nullptr)
+	{
+		float cometAngle = 0.1f * (float)dt;
+		float semiMajorAxis = 180.0f;
+		float semiMinorAxis = 45.0f;
+		float x = cos(cometAngle) * semiMajorAxis;
+		float z = sin(cometAngle) * semiMinorAxis;
+		glm::mat4 cometModel = glm::mat4(1.0f);
+		cometModel *= glm::translate(glm::mat4(1.0f), glm::vec3(x, 8.0f, z));
+		cometModel *= glm::rotate(glm::mat4(1.0f), 1.2f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
+		cometModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.33f, 0.33f, 0.33f));
+		m_comet->Update(cometModel);
+	}
+
 	//moon
 	glm::mat4 moonModel = glm::mat4(1.0f);
 	moonModel *= glm::rotate(glm::mat4(1.0f), 0.30f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
-	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(13.00f, 0.0f, 0.0f));
+	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(16.88f, 0.0f, 0.0f));
 	moonModel *= glm::rotate(glm::mat4(1.0f), glm::radians(25.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	moonModel *= glm::rotate(glm::mat4(1.0f), 1.0f * (float)dt, glm::vec3(0.0f, 1.0f, 0.0f));
 	moonModel *= glm::translate(glm::mat4(1.0f), glm::vec3(1.2f, 0.0f, 0.0f));
-	moonModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.097f, 0.097f, 0.097f));
+	moonModel *= glm::scale(glm::mat4(1.0f), glm::vec3(0.146f, 0.146f, 0.146f));
 	m_moon->Update(moonModel);
 
 	//starship
@@ -449,6 +469,8 @@ void Graphics::Render()
 			m_sphere2->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
 	}*/
+
+	// planets
 	glUniform1i(m_isSun, false); // is Sun bool false
 	for (Planet& planet : m_planets) {
 		if (planet.sphere != NULL) {
@@ -467,6 +489,27 @@ void Graphics::Render()
 		}
 	}
 
+	//render comet
+	if (m_comet != NULL) {
+		glUniform1i(m_isSun, false);
+		glUniform1i(m_isEmissive, false);
+
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_comet->GetModel()));
+
+		if (m_comet->hasTex) {
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_comet->getTextureID());
+
+			GLuint sampler = m_shader->GetUniformLocation("sp");
+			if (sampler == INVALID_UNIFORM_LOCATION)
+			{
+				printf("Sampler Not found not found\n");
+			}
+
+			glUniform1i(sampler, 0);
+			m_comet->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+		}
+	}
 
 	// Render Moon
 	glUniform1i(m_isSun, false); // is Sun bool false

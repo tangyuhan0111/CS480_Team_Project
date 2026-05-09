@@ -59,6 +59,8 @@ class Graphics
     GLint m_shininess;
     GLint m_isSun;
 
+    Sphere* m_comet;
+
     GLint m_isEmissive;
     GLint m_emissiveColor;
     GLint m_emissiveStrength;
