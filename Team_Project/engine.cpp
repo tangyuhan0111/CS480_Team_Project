@@ -37,11 +37,10 @@ bool Engine::Initialize()
     return false;
   }
 
-  //glfwSetCursorPosCallback(m_window->getWindow(), cursorPositionCallBack);
   glfwSetWindowUserPointer(m_window->getWindow(), this);
   glfwSetCursorPosCallback(m_window->getWindow(), Engine::cursor_position_callback);
   glfwSetScrollCallback(m_window->getWindow(), Engine::scroll_callback);
-  glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED); //disables mouse cursor so it can moved outside of window
 
   // No errors
   return true;

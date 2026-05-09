@@ -36,6 +36,8 @@ class Graphics
     void ComputeTransforms (double dt, std::vector<float> speed, std::vector<float> dist, std::vector<float> rotSpeed, glm::vec3 rotVector, std::vector<float> scale, glm::mat4& tmat, glm::mat4& rmat, glm::mat4& smat);
 
     void AddPlanet(const std::string& name, const char* texturePath, float radius, float orbitRadius, float orbitSpeed, float rotationSpeed, float axialTilt);
+	void GenerateAsteroidBelt(int count, float innerRadius, float outerRadius, std::vector<glm::mat4>& beltMatrices);
+	void RenderAsteroidBelt(const glm::mat4& view, const glm::mat4& projection);
 
     stack<glm::mat4> modelStack;
 
@@ -56,6 +58,10 @@ class Graphics
     GLint m_specularStrength;
     GLint m_shininess;
     GLint m_isSun;
+    std::vector<glm::mat4> m_innerBeltMatrix;
+	std::vector<glm::mat4> m_outerBeltMatrix;
+	int innerBeltCount = 3000;
+	int outerBeltCount = 5000;
 
     /*Sphere* m_sphere;
     Sphere* m_sphere2;
@@ -72,10 +78,10 @@ class Graphics
     std::vector<Planet> m_planets;
     Sphere* m_sun;
     Sphere* m_moon;
+	Sphere* m_asteroidBelt;
 
     Mesh* m_mesh;
     Skybox* m_skybox;
-
 };
 
 #endif /* GRAPHICS_H */

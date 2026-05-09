@@ -9,6 +9,7 @@ Graphics::Graphics()
 	m_moon = nullptr;
 	m_mesh = nullptr;
 	m_skybox = nullptr;
+	m_asteroidBelt = nullptr;
 }
 
 Graphics::~Graphics()
@@ -20,6 +21,7 @@ Graphics::~Graphics()
 	delete m_moon;
 	delete m_mesh;
 	delete m_skybox;
+	delete m_asteroidBelt;
 	for (Planet& planet : m_planets) {
 		delete planet.sphere;
 	}
@@ -97,6 +99,14 @@ bool Graphics::Initialize(int width, int height)
 
 	// The Sun
 	m_sun = new Sphere(64, "assets\\Term Project Assets\\2k_sun.jpg");
+
+	//aseroid belt
+	m_asteroidBelt = new Sphere(48, "assets\\Term Project Assets\\Mars.jpg");
+
+	srand(static_cast<unsigned int>(time(nullptr)));
+
+	GenerateAsteroidBelt(innerBeltCount, 25.0f, 35.0f, m_innerBeltMatrix); //generate inner belt with 3000 asteroids between radius 25 and 35
+	GenerateAsteroidBelt(outerBeltCount, 100.0f, 150.0f, m_outerBeltMatrix); //generate outer belt with 5000 asteroids between radius 100 and 150
 
 	// add all planet
 	AddPlanet("Mercury", "assets\\Term Project Assets\\Mercury.jpg", 0.138f, 5.22f, 0.60f, 1.0f, 0.0f);
@@ -194,6 +204,56 @@ void Graphics::AddPlanet(const std::string& name, const char* texturePath, float
 	planet.axialTilt = axialTilt;
 
 	m_planets.push_back(planet);
+}
+
+void Graphics::GenerateAsteroidBelt(int count, float innerRadius, float outerRadius, std::vector<glm::mat4>& beltMatrices)
+{
+	beltMatrices.clear();
+	beltMatrices.reserve(count);
+
+	for (int i = 0; i < count; ++i) {
+		float angle = static_cast<float>(rand()) / RAND_MAX * 360.0f;
+		float radius = innerRadius + static_cast<float>(rand()) / RAND_MAX * (outerRadius - innerRadius);
+		float height = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.5f; // Random height for belt thickness
+		float scale = 0.03f + static_cast<float>(rand()) / RAND_MAX * 0.05f; //random scale for asteroids
+
+		glm::mat4 asteroidModel = glm::mat4(1.0f);
+		asteroidModel *= glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		asteroidModel *= glm::translate(glm::mat4(1.0f), glm::vec3(radius, height, 0.0f));
+		asteroidModel *= glm::scale(glm::mat4(1.0f), glm::vec3(scale)); // Scale down the asteroids
+		beltMatrices.push_back(asteroidModel);
+	}
+}
+
+void Graphics::RenderAsteroidBelt(const glm::mat4& view, const glm::mat4& projection)
+{
+	glUniformMatrix4fv(m_viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(m_projectionMatrix, 1, GL_FALSE, glm::value_ptr(projection));
+
+	if (m_asteroidBelt == nullptr)
+	{
+		return;
+	}
+
+	glUniform1i(m_isSun, false);
+	if (m_asteroidBelt->hasTex) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_asteroidBelt->getTextureID());
+		GLuint sampler = m_shader->GetUniformLocation("sp");
+		glUniform1i(sampler, 0);
+	}
+
+	for (const glm::mat4& model : m_innerBeltMatrix) {
+		m_asteroidBelt->Update(model);
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_asteroidBelt->GetModel()));
+		m_asteroidBelt->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+	}
+
+	for (const glm::mat4& model : m_outerBeltMatrix) {
+		m_asteroidBelt->Update(model);
+		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_asteroidBelt->GetModel()));
+		m_asteroidBelt->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
+	}
 }
 
 void Graphics::ComputeTransforms(double dt, std::vector<float> speed, std::vector<float> dist,
@@ -315,6 +375,9 @@ void Graphics::Render()
 			m_moon->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
 		}
 	}
+
+	//render and draw asteroid belt
+	RenderAsteroidBelt(m_camera->GetView(), m_camera->GetProjection());
 
 	// Get any errors from OpenGL
 	auto error = glGetError();
