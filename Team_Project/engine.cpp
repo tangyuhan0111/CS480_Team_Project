@@ -41,6 +41,7 @@ bool Engine::Initialize()
   glfwSetWindowUserPointer(m_window->getWindow(), this);
   glfwSetCursorPosCallback(m_window->getWindow(), Engine::cursor_position_callback);
   glfwSetScrollCallback(m_window->getWindow(), Engine::scroll_callback);
+  glfwSetInputMode(m_window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // No errors
   return true;
@@ -118,49 +119,49 @@ void Engine::ProcessInput()
 		}
 
         //different key bindings to toggle the 8 different planets
-        bool isKey1Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_1) == GLFW_PRESS;
+        bool isKey1Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_1) == GLFW_PRESS; //set to keybind 1
         if (isKey1Pressed && !isKeyPressed[0])
         {
             m_observationPlanetName = "Mercury";
         }
 
-        bool isKey2Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_2) == GLFW_PRESS;
+        bool isKey2Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_2) == GLFW_PRESS; //set to keybind 2
         if (isKey2Pressed && !isKeyPressed[1])
         {
             m_observationPlanetName = "Venus";
         }
 
-        bool isKey3Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_3) == GLFW_PRESS;
+		bool isKey3Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_3) == GLFW_PRESS; //set to keybind 3
         if (isKey3Pressed && !isKeyPressed[2])
         {
             m_observationPlanetName = "Earth";
         }
 
-        bool isKey4Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_4) == GLFW_PRESS;
+		bool isKey4Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_4) == GLFW_PRESS; //set to keybind 4
         if (isKey4Pressed && !isKeyPressed[3])
         {
             m_observationPlanetName = "Mars";
         }
 
-        bool isKey5Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_5) == GLFW_PRESS;
+		bool isKey5Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_5) == GLFW_PRESS; //set to keybind 5
         if (isKey5Pressed && !isKeyPressed[4])
         {
             m_observationPlanetName = "Jupiter";
         }
 
-        bool isKey6Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_6) == GLFW_PRESS;
+		bool isKey6Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_6) == GLFW_PRESS; //set to keybind 6
         if (isKey6Pressed && !isKeyPressed[5])
         {
             m_observationPlanetName = "Saturn";
         }
 
-        bool isKey7Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_7) == GLFW_PRESS;
+		bool isKey7Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_7) == GLFW_PRESS; //set to keybind 7
         if (isKey7Pressed && !isKeyPressed[6])
         {
             m_observationPlanetName = "Uranus";
         }
 
-        bool isKey8Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_8) == GLFW_PRESS;
+		bool isKey8Pressed = glfwGetKey(m_window->getWindow(), GLFW_KEY_8) == GLFW_PRESS; //set to keybind 8
         if (isKey8Pressed && !isKeyPressed[7])
         {
 			m_observationPlanetName = "Neptune";
