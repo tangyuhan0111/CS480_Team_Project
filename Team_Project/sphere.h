@@ -67,7 +67,4 @@ private:
     std::vector<float> pvalues; // vertex positions
     std::vector<float> tvalues; // texture coordinates
     std::vector<float> nvalues; // normal vectors
-
- 
-
 };

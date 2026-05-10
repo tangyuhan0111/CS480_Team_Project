@@ -176,13 +176,6 @@ void Sphere::SetupInstancedBuffers(GLuint& instanceVBO, const std::vector<glm::m
 	glVertexAttribDivisor(6, 1); // Update per instance
 
 	glBindVertexArray(0);
-
-    //// Set up vertex attribute pointers for the instance matrices
-    //for (int i = 0; i < 4; i++) {
-    //    glEnableVertexAttribArray(3 + i); // Assuming location 3-6 are for the instance matrix
-    //    glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(i * sizeof(glm::vec4)));
-    //    glVertexAttribDivisor(3 + i, 1); // Update per instance
-    //}
 }
 
 void Sphere::RenderInstanced(GLint posAttribLoc, GLint colAttribLoc, GLint tcAttribLoc, GLint hasTexLoc, GLuint instanceVBO, GLsizei instanceCount) {

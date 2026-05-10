@@ -181,7 +181,7 @@ void Engine::ProcessInput()
         camera->Accelerate(deltaTime);
     }
 
-    camera->UpdateMovement(deltaTime); //updates camera movement (commented for now since the camera will be moving forward out of view)
+    camera->UpdateMovement(deltaTime); //updates camera movement
 }
 
 void Engine::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
