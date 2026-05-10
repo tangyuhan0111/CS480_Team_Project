@@ -83,6 +83,7 @@ class Graphics
     Sphere* m_sun;
     Sphere* m_moon;
 	Sphere* m_asteroidBelt;
+    Sphere* m_comet;
 
     Mesh* m_mesh;
     Skybox* m_skybox;
