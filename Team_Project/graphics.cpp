@@ -124,7 +124,7 @@ bool Graphics::Initialize(int width, int height)
 	m_comet = new Sphere(32, "assets\\Term Project Assets\\Ceres.jpg");
 
 	//aseroid belt
-	m_asteroidBelt = new Sphere(48, "assets\\Term Project Assets\\Mars.jpg");
+	m_asteroidBelt = new Sphere(48, "assets\\Term Project Assets\\Eris.jpg");
 
 	srand(static_cast<unsigned int>(time(nullptr)));
 
