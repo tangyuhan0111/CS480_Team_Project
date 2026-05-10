@@ -58,13 +58,10 @@ class Graphics
     GLint m_specularStrength;
     GLint m_shininess;
     GLint m_isSun;
-
-    Sphere* m_comet;
-
     GLint m_isEmissive;
     GLint m_emissiveColor;
     GLint m_emissiveStrength;
-
+    GLint m_useInstancing;
     std::vector<glm::mat4> m_innerBeltMatrix;
 	std::vector<glm::mat4> m_outerBeltMatrix;
 	int innerBeltCount = 3000;
@@ -86,6 +83,7 @@ class Graphics
     Sphere* m_sun;
     Sphere* m_moon;
 	Sphere* m_asteroidBelt;
+    Sphere* m_comet;
 
     Mesh* m_mesh;
     Skybox* m_skybox;

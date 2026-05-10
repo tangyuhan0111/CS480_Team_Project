@@ -130,6 +130,8 @@ bool Graphics::Initialize(int width, int height)
 
 	GenerateAsteroidBelt(innerBeltCount, 25.0f, 35.0f, m_innerBeltMatrix); //generate inner belt with 3000 asteroids between radius 25 and 35
 	GenerateAsteroidBelt(outerBeltCount, 100.0f, 150.0f, m_outerBeltMatrix); //generate outer belt with 5000 asteroids between radius 100 and 150
+	m_asteroidBelt->SetupInnerInstances(m_innerBeltMatrix); //set up instanced rendering for inner belt
+	m_asteroidBelt->SetupOuterInstances(m_outerBeltMatrix); //set up instanced rendering for outer belt
 
 	// add all planet
 	AddPlanet("Mercury", "assets\\Term Project Assets\\Mercury.jpg", 0.207f, 6.53f, 0.60f, 1.0f, 0.0f);
@@ -329,6 +331,8 @@ void Graphics::RenderAsteroidBelt(const glm::mat4& view, const glm::mat4& projec
 	}
 
 	glUniform1i(m_isSun, false);
+	glUniform1i(m_useInstancing, true);
+
 	if (m_asteroidBelt->hasTex) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_asteroidBelt->getTextureID());
@@ -336,7 +340,12 @@ void Graphics::RenderAsteroidBelt(const glm::mat4& view, const glm::mat4& projec
 		glUniform1i(sampler, 0);
 	}
 
-	for (const glm::mat4& model : m_innerBeltMatrix) {
+	m_asteroidBelt->RenderInnerInstanced(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture, innerBeltCount);
+	m_asteroidBelt->RenderOuterInstanced(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture, outerBeltCount);
+
+	glUniform1i(m_useInstancing, false);
+
+	/*for (const glm::mat4& model : m_innerBeltMatrix) {
 		m_asteroidBelt->Update(model);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_asteroidBelt->GetModel()));
 		m_asteroidBelt->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
@@ -346,7 +355,7 @@ void Graphics::RenderAsteroidBelt(const glm::mat4& view, const glm::mat4& projec
 		m_asteroidBelt->Update(model);
 		glUniformMatrix4fv(m_modelMatrix, 1, GL_FALSE, glm::value_ptr(m_asteroidBelt->GetModel()));
 		m_asteroidBelt->Render(m_positionAttrib, m_colorAttrib, m_tcAttrib, m_hasTexture);
-	}
+	}*/
 }
 
 void Graphics::ComputeTransforms(double dt, std::vector<float> speed, std::vector<float> dist,
@@ -369,6 +378,7 @@ void Graphics::Render()
 
 	// Start the correct program
 	m_shader->Enable();
+	glUniform1i(m_useInstancing, false);
 
 	// pass the value of uniform to shader
 	glm::vec3 cameraPos = m_camera->GetCameraPos();
@@ -617,6 +627,7 @@ bool Graphics::collectShPrLocs() {
 	m_isEmissive = m_shader->GetUniformLocation("isEmissive");
 	m_emissiveColor = m_shader->GetUniformLocation("emissiveColor");
 	m_emissiveStrength = m_shader->GetUniformLocation("emissiveStrength");
+	m_useInstancing = m_shader->GetUniformLocation("useInstancing");
 
 	return anyProblem;
 }
