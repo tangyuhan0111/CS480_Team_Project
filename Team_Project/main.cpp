@@ -4,7 +4,7 @@
 
 int main(int argc, char **argv)
 {
-    Engine *engine = new Engine("Tutorial Window Name", 800, 600);
+    Engine *engine = new Engine("Solar System Exploration Game", 1920, 1080);
     if (!engine->Initialize())
     {
         printf("The engine failed to start.\n");
