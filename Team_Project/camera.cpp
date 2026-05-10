@@ -300,7 +300,8 @@ void Camera::ThirdPersonCameraView()
 {
     cameraPos = starshipPos - cameraFront * thirdPersonDistancefromStarship + glm::vec3(0.0f, thirdPersonHeightAboveStarship, 0.0f);
 
-    view = glm::lookAt(cameraPos, starshipPos, cameraUp); //positions the camera behind and above the starship
+    glm::vec3 thirdPersonLookTarget = starshipPos + cameraFront * 2.0f;
+    view = glm::lookAt(cameraPos, thirdPersonLookTarget, cameraUp); // positions the camera close behind the starship while looking slightly ahead
 
     projection = glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 500.0f);
 }

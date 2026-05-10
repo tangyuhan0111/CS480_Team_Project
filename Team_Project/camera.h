@@ -59,8 +59,8 @@ class Camera
 
     //third person camera
     glm::vec3 starshipPos = glm::vec3(0.0f, 0.0f, 12.0f);
-    float thirdPersonDistancefromStarship = 10.0f;
-    float thirdPersonHeightAboveStarship = 4.0f;
+    float thirdPersonDistancefromStarship = 3.3f;
+    float thirdPersonHeightAboveStarship = 1.4f;
 
 	//first person camera
     float firstPersonHeightAboveStarship = 0.8f;
