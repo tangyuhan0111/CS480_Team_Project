@@ -581,11 +581,10 @@ bool Graphics::collectShPrLocs() {
 	m_specularStrength = m_shader->GetUniformLocation("specularStrength");
 	m_shininess = m_shader->GetUniformLocation("shininess");
 	m_isSun = m_shader->GetUniformLocation("isSun");
+	m_useInstancing = m_shader->GetUniformLocation("useInstancing");
 	m_isEmissive = m_shader->GetUniformLocation("isEmissive");
 	m_emissiveColor = m_shader->GetUniformLocation("emissiveColor");
-	m_emissiveStrength = m_shader->GetUniformLocation("emissiveStrength");
-	m_useInstancing = m_shader->GetUniformLocation("useInstancing");
-
+m_emissiveStrength = m_shader->GetUniformLocation("emissiveStrength");
 	return anyProblem;
 }
 
